@@ -10,26 +10,35 @@ class Game extends Component {
           squares: Array(9).fill()
         }
       ],
+      stepNumber:0,
       xIsNext: true
     };
   }
   handleClick(i) {
-    const history = [...this.state.history];
-    const current = history[history.length - 1];
-    const squares = current.squares;
-    //当有玩家胜出时,或者某个Square已经被填充是,该函数不做任何处理直接返回
+    const history = this.state.history.slice(0,this.state.stepNumber+1);
+    const current = history[this.state.stepNumber];
+    const squares = [...current.squares];
+    //当有玩家胜出时,或者某个Square已经被填充时,该函数不做任何处理直接返回
     if (this.calculateWinner(squares) || squares[i]) {
       return;
     }
     squares[i] = this.state.xIsNext ? "X" : "O";
     this.setState({
-      history: history.concat([
+      history: history.concat([ /* concat不会改变原数组 */
         {
           squares: squares
         }
       ]),
+      stepNumber: history.length,
       xIsNext: !this.state.xIsNext
     });
+  }
+  jumpTo(step) {
+    this.setState({
+      stepNumber: step,
+      xIsNext: step % 2 === 0
+    })
+
   }
   calculateWinner(squares) {
     const lines = [
@@ -55,9 +64,19 @@ class Game extends Component {
     return null;
   }
   render() {
+    //使用最新一次历史记录来确定并展示游戏的状态
     const history = this.state.history;
-    const current = history[history.length - 1];
+    const current = history[this.state.stepNumber];
     const winner = this.calculateWinner(current.squares);
+
+    const moves = this.state.history.map((step,move) => {
+      const desc = move ? 'Go to move #' + move : 'Go to game start'
+      return (
+        <li key={move}>
+          <button onClick={()=> this.jumpTo(move)}>{desc}</button>
+        </li>
+      )
+    })
     let status;
     if (winner) {
       status = "Winner: " + winner;
@@ -71,9 +90,7 @@ class Game extends Component {
         </div>
         <div className="game-info">
           <div>{status}</div>
-          <ol>
-           
-          </ol>
+          <ol>{moves}</ol>
         </div>
       </div>
     );
